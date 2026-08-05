@@ -139,16 +139,21 @@ def pub_rotation():
     Aw, Qw = bl.prep(dy["A"], dy["Q"], weight=dy["NSM"])
     cc = bl.active_coords(Aw)
     ang_dy, c0_dy, cw_dy = _blind_study(Aw, Qw, cc, WALL)
-    kap_dy = bl.kappa(Aw, Qw, np.full(19, WALL), m=1, nsamp=25, coords=cc)
+    kap_dy = 3.0   # stable median, 300-sample receipt (IQR 1.9-7.0)
 
     lep = sg.load_lep()
     cov = np.load("lep_rho.npy") * np.outer(lep["sigma"], lep["sigma"])
     # LEP file stores Q with mu = A.c + c.Q.c (extract_lep.wl), so the
-    # Hessian battery_lib expects is 2Q
+    # Hessian battery_lib expects is 2Q. Its variables are Lambda-explicit
+    # Warsaw coefficients C, so the NDA box is |C| <= 4 pi (the absorbed
+    # wall 0.030 would scan a region 400x too small).
+    LEPBOX = 4 * np.pi
     Awl, Qwl = bl.prep(lep["A"], 2.0 * lep["Q"], cov=cov)
     ccl = bl.active_coords(Awl)
-    ang_lp, c0_lp, cw_lp = _blind_study(Awl, Qwl, ccl, WALL)
-    kap_lp = bl.kappa(Awl, Qwl, np.full(10, WALL), m=1, nsamp=25, coords=ccl)
+    ang_lp, c0_lp, cw_lp = _blind_study(Awl, Qwl, ccl, LEPBOX)
+    # stable medians from the 300-sample run (lep_box_fix / stable-kappa
+    # receipt): DY 3.0 (IQR 1.9-7.0), LEP 1.0 (IQR 0.3-5.0)
+    kap_lp = 1.0
 
     fig, (a, b) = plt.subplots(1, 2, figsize=(ps.DOUBLE, 2.7))
     rngj = np.random.default_rng(3)
@@ -159,7 +164,7 @@ def pub_rotation():
     for x, ang, kapv, col in [(1, ang_dy, kap_dy, ps.BLUE),
                               (2, ang_lp, kap_lp, ps.ORANGE)]:
         a.hlines(np.median(ang), x - .16, x + .16, color=col, lw=2.2)
-        a.text(x, 97, rf"$\kappa={kapv:.2f}$", ha="center", fontsize=8,
+        a.text(x, 97, rf"$\kappa={kapv:.1f}$", ha="center", fontsize=8,
                color=col)
     a.set_xticks([1, 2], ["Drell-Yan", "LEP EWPO"])
     a.set_xlim(0.5, 2.5); a.set_ylim(-3, 106)
@@ -178,15 +183,15 @@ def pub_rotation():
         b.plot(x, c0v, "o", mfc="white", mec=col, mew=1.5, ms=7, zorder=3)
         b.plot(x, cwv, "o", color=col, ms=7, zorder=3)
         for v in (c0v, cwv):
-            b.text(x + 0.08, v, f"{v:.1e}" if v < 0.01 else f"{v:.1f}",
-                   fontsize=6.5, va="center")
+            lab = f"{v:.1e}" if (v < 0.01 or v >= 1e3) else f"{v:.1f}"
+            b.text(x + 0.08, v, lab, fontsize=6.5, va="center")
     hnd = [plt.Line2D([], [], marker="o", mfc="white", mec="0.3", ls="none",
                       label="at origin"),
            plt.Line2D([], [], marker="o", color="0.3", ls="none",
                       label="worst point in validity range")]
     b.set_xticks(xs, ["Drell-Yan", "LEP EWPO"])
     b.set_xlim(0.6, 2.6)
-    b.set_ylim(1e-6, 3e2)
+    b.set_ylim(1e-1, 1e9)
     b.set_ylabel(r"$\Delta\chi^2$ of fixed shift along $v_0$")
     b.legend(handles=hnd, loc="upper right")
     ps.panel_tag(b, "b")
@@ -294,7 +299,7 @@ def pub_mbam():
               color=ps.VERMIL, label="DY slice (truncated EFT)")
     x = np.logspace(0, 3.5, 60)
     ax.loglog(x, np.exp(-x / 50), "--", color=ps.BLUE,
-              label="saturating model (true boundary)")
+              label="illustrative saturating curve")
     ax.axvline(1.0, ls="--", lw=0.9, color="0.4")
     ax.text(1.35, 1e-12, "EFT validity\nwall", fontsize=7, color="0.35")
     ax.axhline(1.0, ls=":", lw=0.8, color="0.6")
@@ -323,7 +328,7 @@ def pub_sigma():
     pts = []
     for name, w in sigmas.items():
         Aw, Qw = bl.prep(A, Q, weight=w)
-        kap = bl.kappa(Aw, Qw, np.full(19, WALL), m=2, nsamp=30, coords=cc)
+        kap = bl.kappa(Aw, Qw, np.full(19, WALL), m=1, nsamp=30, coords=cc)
         info = np.linalg.norm(Aw, axis=1) ** 2
         frac = info[mll > mref].sum() / info.sum()
         pts.append((name, frac * 100, kap))

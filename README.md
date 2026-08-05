@@ -13,13 +13,18 @@ pipeline makes model reduction honest, in three steps:
    are found by one SVD of the stacked linear + quadratic response and are
    imposed at zero cost (Drell-Yan: `C_HB = C_HW`).
 2. **A price for every drop** — the largest chi^2 change the drop can cause
-   anywhere in the EFT validity box (worst case, priced jointly for sets).
-   Drell-Yan with the measured CMS covariance: 19 coefficients -> 13 kept at
-   a worst-case cost of 0.8 sigma.
+   anywhere in the EFT validity box (worst case: interior samples, all sign
+   corners, bounded polish; priced jointly for sets). Drell-Yan with the
+   measured CMS covariance: 19 coefficients -> 14 kept at a worst-case cost
+   of 0.1 sigma. LEP admits no reduction at Lambda = 5 TeV: cheapest drop
+   1.4e4, forcing its exact linear relations costs 3.7e3 (they become free
+   only for Lambda >~ 20 TeV).
 3. **The twist certificate `kappa`** — decides whether the combination the
-   data cannot see is the same everywhere (one relation removes it; LEP,
-   kappa = 0.53) or rotates across the box (only drops are honest;
-   Drell-Yan, kappa = 5.65, 47 degrees of rotation).
+   data cannot see is the same everywhere (one relation removes it) or
+   rotates across the box (only drops are honest). Both data sets are
+   obstructed: median kappa 3.0 (IQR 1.9-7.0) for Drell-Yan, 1.0 (0.3-5.0)
+   for LEP, threshold 0.056. Values are quoted as medians with interquartile
+   ranges; only the clean/obstructed verdict is used.
 
 ## Layout
 
@@ -32,7 +37,9 @@ paper/    pub_figs.py            all 7 paper figures (pub_*.pdf)
           dy_reduce_realcov.py   DY drop-price ladder + greedy 19->13 (Table: ladder)
           dy_reduce_end2end.py   same with Poisson errors (comparison column)
           aic_contrast.py        AIC vs worst-case price (Table: AIC)
-          lep_gates_verify.py    LEP kernel relations + price vs Lambda
+          lep_box_fix.py         LEP kernel relations, kappa, rotation,
+                                 price vs Lambda (correct |C| <= 4pi box)
+          dy_ladder_final.py     corner-priced DY ladder + greedy (Table: ladder)
           lep_curved_v3.py       LEP linear vs quadratic 68% intervals (Table: intervals)
 checks/   cross-checks quoted in the text: monomial-SVD comparison,
           sub-block relation scan, real-covariance robustness, dim-8
@@ -67,8 +74,12 @@ figures/  the shipped pub_*.pdf / .png
 - The Drell-Yan file stores `H` directly. **The LEP file stores `Q` with
   `mu = SM + A.c + c.Q.c`, so its Hessian is `H = 2Q`.** Feeding `Q` in as
   the Hessian understates LEP curvature by a factor 2.
-- Validity box: `|c_i| <= 4 pi v^2 / Lambda^2` in the NDA-graded Warsaw
-  basis (0.030 at Lambda = 5 TeV).
+- Validity box: `|C_i| <= 4 pi` for the Lambda-explicit Warsaw coefficients
+  (the LEP arrays), equivalently `|c_i| <= 4 pi v^2/Lambda^2 = 0.030` at
+  5 TeV for the absorbed normalization (the Drell-Yan arrays). Feeding the
+  absorbed wall to the Lambda-explicit LEP arrays scans a region ~400x too
+  small — this mistake was caught in an audit and is why lep_gates_verify.py
+  was replaced by lep_box_fix.py.
 - All worst-case prices use the monotone (backtracking) Gauss-Newton
   projection in `battery_lib._proj_chi2`; without monotonicity, stalled
   projections inflate sup-based prices.

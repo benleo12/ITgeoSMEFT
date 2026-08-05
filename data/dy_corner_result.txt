@@ -1,0 +1,2 @@
+greedy 6-set (was 0.72): corner+polish worst-case = 5.66
+7-set (was 10.3): corner+polish worst-case = 48.2
