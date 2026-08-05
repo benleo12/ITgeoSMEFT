@@ -34,7 +34,7 @@ core/     smeftgeo.py      loaders, Fisher metric, kernel, twist, MBAM ride
                            E_inf prices, kappa on the resolved slice
           pubstyle.py      shared figure style + Warsaw-basis name map
 paper/    pub_figs.py            all 7 paper figures (pub_*.pdf)
-          dy_reduce_realcov.py   DY drop-price ladder + greedy 19->13 (Table: ladder)
+          dy_reduce_realcov.py   earlier DY ladder (superseded by dy_ladder_final)
           dy_reduce_end2end.py   same with Poisson errors (comparison column)
           aic_contrast.py        AIC vs worst-case price (Table: AIC)
           lep_box_fix.py         LEP kernel relations, kappa, rotation,
@@ -97,7 +97,8 @@ python paper/pub_figs.py            # all 7 figures
 python paper/dy_reduce_realcov.py   # DY ladder + greedy reduction (real cov)
 python paper/dy_reduce_end2end.py   # DY ladder (Poisson)
 python paper/aic_contrast.py        # AIC vs worst-case table
-python paper/lep_gates_verify.py    # LEP relations + price vs Lambda
+python paper/lep_box_fix.py         # LEP relations, kappa, prices (4pi box)
+python paper/dy_ladder_final.py     # corner-priced DY ladder + greedy
 python paper/lep_curved_v3.py       # LEP interval table
 ```
 
