@@ -51,7 +51,7 @@ def pub_spectrum():
         ps.panel_tag(ax, tag, outside=True)
         ax.legend(loc="lower left")
     axes[0].set_ylabel(r"eigenvalue of $g=J^{\rm T}\Sigma^{-1}J$")
-    axes[0].text(0.62, 0.96, "Drell--Yan", transform=axes[0].transAxes,
+    axes[0].text(0.62, 0.96, "Drell-Yan", transform=axes[0].transAxes,
                  ha="center", va="top", fontsize=9)
     axes[1].text(0.5, 0.96, "LEP EWPO", transform=axes[1].transAxes,
                  ha="center", va="top", fontsize=9)
@@ -89,8 +89,12 @@ def pub_kernel():
     fig, ax = plt.subplots(figsize=(ps.SINGLE, 2.9))
     y = np.arange(11)
     vals = [max(lifts[i], 1e-10) for i in order]
-    cols = [ps.GREEN if lifts[i] < 1 else ps.PURPLE for i in order]
-    ax.barh(y, vals, color=cols, height=0.6)
+    ax.grid(axis="x", alpha=0.22, lw=0.6)
+    for yi, i in zip(y, order):
+        clean = lifts[i] < 1
+        ax.plot(max(lifts[i], 1e-10), yi, "s" if clean else "o",
+                ms=6 if clean else 4.6,
+                color=ps.GREEN if clean else ps.PURPLE, zorder=3)
     ax.set_xscale("log")
     ax.set_yticks(y)
     ax.set_yticklabels([labels[i] for i in order], fontsize=7)
@@ -157,27 +161,34 @@ def pub_rotation():
         a.hlines(np.median(ang), x - .16, x + .16, color=col, lw=2.2)
         a.text(x, 97, rf"$\kappa={kapv:.2f}$", ha="center", fontsize=8,
                color=col)
-    a.set_xticks([1, 2], ["Drell--Yan", "LEP EWPO"])
+    a.set_xticks([1, 2], ["Drell-Yan", "LEP EWPO"])
     a.set_xlim(0.5, 2.5); a.set_ylim(-3, 106)
     a.set_ylabel("rotation of blind direction [deg]")
     ps.panel_tag(a, "a")
 
     xs = np.array([1, 2])
-    b.bar(xs - .16, [c0_dy, c0_lp], width=.3, color="white",
-          edgecolor=[ps.BLUE, ps.ORANGE], lw=1.6, label="at origin")
-    b.bar(xs + .16, [cw_dy, cw_lp], width=.3, color=[ps.BLUE, ps.ORANGE],
-          label="worst point in validity range")
     b.set_yscale("log")
     b.axhline(1.0, color=ps.GRAY, ls="--", lw=1.0)
     b.text(2.42, 1.5, "detectable", color=ps.GRAY, fontsize=7, ha="right")
-    for x, v in zip([1 - .16, 1 + .16, 2 - .16, 2 + .16],
-                    [c0_dy, cw_dy, c0_lp, cw_lp]):
-        b.text(x, v * 1.6, f"{v:.1e}" if v < 0.01 else f"{v:.1f}",
-               ha="center", fontsize=6.5)
-    b.set_xticks(xs, ["Drell--Yan", "LEP EWPO"])
+    for x, c0v, cwv, col in [(1, c0_dy, cw_dy, ps.BLUE),
+                             (2, c0_lp, cw_lp, ps.ORANGE)]:
+        b.annotate("", xy=(x, cwv), xytext=(x, c0v),
+                   arrowprops=dict(arrowstyle="-|>", lw=1.6, color=col,
+                                   mutation_scale=14))
+        b.plot(x, c0v, "o", mfc="white", mec=col, mew=1.5, ms=7, zorder=3)
+        b.plot(x, cwv, "o", color=col, ms=7, zorder=3)
+        for v in (c0v, cwv):
+            b.text(x + 0.08, v, f"{v:.1e}" if v < 0.01 else f"{v:.1f}",
+                   fontsize=6.5, va="center")
+    hnd = [plt.Line2D([], [], marker="o", mfc="white", mec="0.3", ls="none",
+                      label="at origin"),
+           plt.Line2D([], [], marker="o", color="0.3", ls="none",
+                      label="worst point in validity range")]
+    b.set_xticks(xs, ["Drell-Yan", "LEP EWPO"])
+    b.set_xlim(0.6, 2.6)
     b.set_ylim(1e-6, 3e2)
     b.set_ylabel(r"$\Delta\chi^2$ of fixed shift along $v_0$")
-    b.legend(loc="upper right")
+    b.legend(handles=hnd, loc="upper right")
     ps.panel_tag(b, "b")
     fig.tight_layout()
     ps.save(fig, "pub_rotation")
@@ -199,7 +210,7 @@ def pub_energy():
               label=rf"dim-6$^2$ ($H_b$), slope ${pQ:.1f}$")
     ax.set_xlabel(r"$m_{\ell\ell}$ [GeV]")
     ax.set_ylabel("whitened response (norm.)")
-    ax.text(0.04, 0.06, "Drell--Yan", transform=ax.transAxes, fontsize=9)
+    ax.text(0.04, 0.06, "Drell-Yan", transform=ax.transAxes, fontsize=9)
     ax.legend(loc="upper right")
     fig.tight_layout()
     ps.save(fig, "pub_energy")
@@ -225,11 +236,15 @@ def pub_ladder():
     names = sorted(real, key=real.get)
     y = np.arange(len(names))
     fig, ax = plt.subplots(figsize=(ps.SINGLE, 4.2))
-    ax.barh(y, [max(real[n], 3e-7) for n in names], height=0.62,
-            color=[ps.BLUE if n in dropped else "#B0C8DC" for n in names],
-            label=None)
-    ax.plot([pois[n] for n in names], y, "o", ms=3.6, mfc="white",
-            mec=ps.VERMIL, mew=1.0, ls="none", label="Poisson errors")
+    ax.grid(axis="x", alpha=0.22, lw=0.6)
+    for i, n in enumerate(names):          # connector: real -> Poisson price
+        ax.plot([max(real[n], 3e-7), pois[n]], [i, i], color="0.87",
+                lw=0.9, zorder=1)
+    for i, n in enumerate(names):
+        ax.plot(max(real[n], 3e-7), i, "o", ms=5,
+                color=ps.BLUE if n in dropped else "#8FB4D2", zorder=3)
+    ax.plot([pois[n] for n in names], y, "o", ms=4, mfc="white",
+            mec=ps.VERMIL, mew=1.0, ls="none", zorder=3)
     ax.set_xscale("log")
     ax.axvline(1.0, color=ps.GRAY, ls="--", lw=0.9)
     ax.axvline(4.0, color=ps.GRAY, ls=":", lw=0.9)
@@ -238,9 +253,10 @@ def pub_ladder():
     ax.invert_yaxis()
     ax.set_xlabel(r"worst-case $\Delta\chi^2$ of dropping the coefficient")
     # legend in the empty top-right region; thresholds explained IN the legend
-    import matplotlib.patches as mpatches
-    h = [mpatches.Patch(color=ps.BLUE, label="real CMS cov., dropped set"),
-         mpatches.Patch(color="#B0C8DC", label="real CMS cov., kept"),
+    h = [plt.Line2D([], [], marker="o", color=ps.BLUE, ls="none",
+                    label="real CMS cov., dropped set"),
+         plt.Line2D([], [], marker="o", color="#8FB4D2", ls="none",
+                    label="real CMS cov., kept"),
          plt.Line2D([], [], marker="o", mfc="white", mec=ps.VERMIL, ls="none",
                     label="Poisson errors"),
          plt.Line2D([], [], color=ps.GRAY, ls="--", label=r"$\Delta\chi^2=1$"),
