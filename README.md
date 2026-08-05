@@ -19,10 +19,11 @@ pipeline makes model reduction honest, in three steps:
    of 0.1 sigma. LEP admits no reduction at Lambda = 5 TeV: cheapest drop
    1.4e4, forcing its exact linear relations costs 3.7e3 (they become free
    only for Lambda >~ 20 TeV).
-3. **The twist certificate `kappa`** — decides whether the combination the
+3. **The twist number `T`** (called `kappa` in the code, see Conventions)
+   — decides whether the combination the
    data cannot see is the same everywhere (one relation removes it) or
    rotates across the box (only drops are honest). Both data sets are
-   obstructed: median kappa 3.0 (IQR 1.9-7.0) for Drell-Yan, 1.0 (0.3-5.0)
+   obstructed: median T 3.0 (IQR 1.9-7.0) for Drell-Yan, 1.0 (0.3-5.0)
    for LEP, threshold 0.056. Values are quoted as medians with interquartile
    ranges; only the clean/obstructed verdict is used.
 
@@ -80,6 +81,12 @@ figures/  the shipped pub_*.pdf / .png
   absorbed wall to the Lambda-explicit LEP arrays scans a region ~400x too
   small — this mistake was caught in an audit and is why lep_gates_verify.py
   was replaced by lep_box_fix.py.
+- Notation: the paper writes the twist number as `T` and its local density
+  as `T(c)`. The code predates that choice and calls them `kappa` and the
+  per-point twist inside `BoxTwist`. They are the same quantities. The
+  paper avoids `kappa` because it reads as a curvature, and the twist is
+  not a curvature: it measures how the blind direction reorients from point
+  to point, not how the manifold bends.
 - All worst-case prices use the monotone (backtracking) Gauss-Newton
   projection in `battery_lib._proj_chi2`; without monotonicity, stalled
   projections inflate sup-based prices.

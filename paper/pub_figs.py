@@ -164,7 +164,7 @@ def pub_rotation():
     for x, ang, kapv, col in [(1, ang_dy, kap_dy, ps.BLUE),
                               (2, ang_lp, kap_lp, ps.ORANGE)]:
         a.hlines(np.median(ang), x - .16, x + .16, color=col, lw=2.2)
-        a.text(x, 97, rf"$\kappa={kapv:.1f}$", ha="center", fontsize=8,
+        a.text(x, 97, rf"$T={kapv:.1f}$", ha="center", fontsize=8,
                color=col)
     a.set_xticks([1, 2], ["Drell-Yan", "LEP EWPO"])
     a.set_xlim(0.5, 2.5); a.set_ylim(-3, 106)
@@ -350,7 +350,7 @@ def pub_sigma():
     ax.set_xlim(15, 118)
     ax.set_ylim(0.03, 15)                    # headroom: no clipped labels
     ax.set_xlabel(r"Fisher weight above $200$ GeV [%]")
-    ax.set_ylabel(r"twist $\kappa$")
+    ax.set_ylabel(r"twist number $T$")
     fig.tight_layout()
     ps.save(fig, "pub_sigma")
 
